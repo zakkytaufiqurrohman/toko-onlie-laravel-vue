@@ -113,7 +113,7 @@
                                             :items = "services"
                                             @change="calculateBil"
                                             item-text="resume"
-                                            item-value="id"
+                                            item-value="service"
                                             label="courier Service"
                                             persistent-hint
                                             single-line
@@ -134,7 +134,7 @@
                                     <v-container>
                                         <v-layout row wrap>
                                             <v-flex xs6 text-center>
-                                                <!-- Total Bill ({{ totalQuantity }} items) -->
+                                                Total Bill ({{ totalQuantity }} items)
                                                 <div class="title">
                                                     {{ totalBill.toLocaleString('id-ID')}}
                                                 </div>
@@ -164,10 +164,10 @@ export default {
             'phone' : '',
             'province_id' : '',
             'city_id': '',
-            'courier' : '',
-            'couriers' : [],
-            'service' : '',
-            'services' : [],
+            courier : '',
+            couriers : [],
+            service : '',
+            services : [],
             shippingCost : 0,
             totalBill : 0,
         }
@@ -180,7 +180,8 @@ export default {
             countCart: 'cart/count',
             carts: 'cart/carts',
             totalPrice: 'cart/totalPrice',
-            totalWeight: 'cart/totalWeight'
+            totalWeight: 'cart/totalWeight',
+            totalQuantity: 'cart/totalQuantity'
         }),
         citiesByProvince() {
             let province_id = this.province_id
@@ -269,11 +270,8 @@ export default {
             let selectedService = this.services.find((service) => {
                 return (service.service == this.service)
             })
-            console.log('services',this.services);
-            console.log('ini service',this.service);
-            console.log('ini hasil', selectedService);
-            // this.shippingCost = selectedService.cost
-            // this.totalBill = parseInt(this.totalPrice) + parseInt(this.shippingCost);
+            this.shippingCost = selectedService.cost
+            this.totalBill = parseInt(this.totalPrice) + parseInt(this.shippingCost)
         }
     },
     created() {
