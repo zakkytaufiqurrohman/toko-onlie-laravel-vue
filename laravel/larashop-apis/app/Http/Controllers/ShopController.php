@@ -9,6 +9,9 @@ use App\Http\Resources\Provinces as provinceResourceCollection;
 use App\Http\Resources\Cities as cityResourceCollection;
 use Illuminate\Support\Facades\Auth;
 use App\Book;
+use App\Order;
+use App\BookOrder;
+use DB;
 
 class ShopController extends Controller
 {
@@ -214,31 +217,170 @@ class ShopController extends Controller
     // fungsi untuk get api rajaongkir
     protected function getServices($data)
     {
-        $url_cost = "https://api.rajaongkir.com/starter/cost";
-        $key = "85d9f98f2bf0327db08324ec64c6e155";
-        $postdata = http_build_query($data);
         $curl = curl_init();
-        curl_setopt_array($curl, [
-            CURLOPT_URL => $url_cost,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => "",
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 30,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => "POST",
-            CURLOPT_POSTFIELDS => $postdata,
-            CURLOPT_HTTPHEADER => [
+
+        curl_setopt_array($curl, array(
+        CURLOPT_URL => "https://api.rajaongkir.com/starter/cost",
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => "",
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => "POST",
+        CURLOPT_POSTFIELDS => "origin=501&destination=114&weight=1700&courier=jne",
+        CURLOPT_HTTPHEADER => array(
             "content-type: application/x-www-form-urlencoded",
-            "key: ".$key
-            ],
-        ]);
+            "key: 85d9f98f2bf0327db08324ec64c6e155"
+        ),
+        ));
+
         $response = curl_exec($curl);
-        $error = curl_error($curl);
+        $err = curl_error($curl);
+
         curl_close($curl);
 
         return [
-            'error' => $error,
+            'error' => $err,
             'response' => $response,
         ];
+    }
+    // 
+    public function payment(Request $request) 
+    {
+        $this->validate($request,[
+            'courier' => 'required',
+            'service' => 'required',
+            'carts' => 'required'
+        ]);
+
+        $error = 0;
+        $status = "error";
+        $message = "";
+        $data = [];
+        $user = Auth::user();
+        if ($user) {
+
+            DB::beginTransaction();
+            try {
+                // prepare
+                $origin = 153; //base pengiriman:yaitu jaksel;
+                $destination = $user->city_id;
+                if ($destination <= 0) {
+                    $error ++;
+                }
+                $courier = $request->courier;
+                $service = $request->service;
+                $carts = json_decode($request->carts, true);
+    
+                // create order
+                $order = new Order; 
+                $order->user_id = $user->id;
+                $order->total_price = 0;
+                $order->invoice_number = date('YmdHis');
+                $order->courier_service = $courier.'-'.$service;
+                $order->status = 'SUBMIT';
+                if($order->save()){
+                    $total_price = 0;
+                    $total_weight = 0;
+                    foreach ($carts as $cart) {
+                        $id = (int)$cart['id'];
+                        $quantity = (int)$cart['quantity'];
+                        $book = Book::find($id);
+                        if ($book) {
+                            if ($book->stock >= $quantity) {
+                                $total_price += $book->price * $quantity;
+                                $total_weight += $book->weight * $quantity;
+                                // create book order 
+                                $book_order = new BookOrder;
+                                $book_order->book_id = $book->id;
+                                $book_order->order_id = $order->id;
+                                $book_order->quantity = $quantity;
+                                // - stock
+                                if ($book_order->save()) {
+                                    $book->stock = $book->stock - $quantity;
+                                    $book->save();
+                                }
+                            }
+                            else {
+                                $error ++;
+                                throw new \Exception('stock habis');
+                            }
+                        }
+                        else {
+                            $error ++;
+                            throw new \Exception('Buku tidak ditemukan 404');
+                        }
+                    }
+                }
+    
+                $weight = $total_weight * 1000; //to gram
+                if ($weight <= 0) {
+                    $error ++;
+                    throw new \Exception('berat kosong');
+                }
+                // prepare to cek ongkir
+                $data = [
+                    "origin" => $origin,
+                    "destination" => $destination,
+                    "weight" => $weight,
+                    "courier" => $courier
+                ];
+    
+                //call getService to cek ongkir
+                $data_cost = $this->getServices($data);
+                if ($data_cost['error']) {
+                    $error ++;
+                    throw new \Exception('Courier tidak ditemukan');
+                }
+                // todo dd this variable
+                $response = json_decode($data_cost['response']);
+                $costs = $response->rajaongkir->results[0]->costs;
+                $service_cost = 0;
+                foreach ($costs as $cost) {
+                    $service_name = $cost->service;
+                    if ($service == $service_name) {
+                        $service_cost = $cost->cost[0]->value;
+                        break;
+                    }
+                }
+    
+                if ($service_cost <= 0) {
+                    $error ++;
+                    throw new Exception('cost null');
+                }
+                $totalBill = 0;
+                $totalBill = $total_price * $service_cost;
+    
+                // update total bill/price pada tabel order
+                $order->total_price = $totalBill;
+                if ($order->save()) {
+                    if ($error == 0) {
+                        DB::commit();
+                        $status = 'success';
+                        $message = 'Transaction Success';
+                        $data = [
+                            'order_id' => $order->id,
+                            'total_bill' => $totalBill,
+                            'invoice_number' => $order->invoice_number
+                        ];
+                    }
+                }
+                else {
+                    $message = 'error'.$error;
+                }
+    
+            } catch (\Exception $e) {
+                $message = $e->getMessage();
+                DB::rollback();
+            }
+        }
+        else {
+            $message = 'user tidak ditemukan';
+        }
+        return response()->json([
+            'status' => $status,
+            'message' => $message,
+            'data' => $data,
+        ], 200);
     }
 }

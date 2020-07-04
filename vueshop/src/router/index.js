@@ -44,6 +44,12 @@ const routes = [
     name: 'checkout',
     component: () => import('../views/Checkout.vue'),
     meta: { auth: true } //harus login dulu
+  },
+  {
+    path: '/payment',
+    name: 'payment',
+    component: () => import('../views/Payment.vue'),
+    meta: {auth:true}
   }
 ]
 

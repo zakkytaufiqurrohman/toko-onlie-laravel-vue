@@ -35,6 +35,7 @@ Route::prefix('v1')->group(function () {
     Route::get('city', 'ShopController@cities');
 
     Route::get('couriers', 'ShopController@couriers');
+    Route::post('payment', 'ShopController@payment');
     
     // private api
     Route::middleware('auth:api')->group(function () {

@@ -16,7 +16,7 @@ class CreateOrdersTable extends Migration
         Schema::create('orders', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('user_id');
-            $table->float('total_price');
+            $table->double('total_price');
             $table->string('invoice_number');
             $table->string('courier_service')->nullable();
             $table->enum('status', ['SUBMIT', 'PROCESS', 'FINISH',
