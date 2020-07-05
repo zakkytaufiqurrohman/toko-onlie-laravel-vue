@@ -52,11 +52,13 @@
 				</div>
         <v-list>
           <template v-for="(item, index) in menus" >
+            
             <v-list-item 
               :key="`menu-`+index" 
               :to="item.route"
               v-if="!item.auth || (item.auth && !guest)"
               >
+              <h3>{{item.title}}</h3>
               <v-list-item-icon>
                 <v-icon left>{{item.icon}}</v-icon>
               </v-list-item-icon>
@@ -117,8 +119,10 @@ export default {
     menus: [
       { title: "Home", icon: "mdi-home", route: "/" },
       { title: "About", icon: "mdi-help-box", route: "/about" },
-      { title: "profile", icon: "mdi-account", route: "/profile"}
-		],
+      { title: "profile", icon: "mdi-account", route: "/profile",auth:true },
+      { title: "MyOrder", icon: "mdi-shopping", route: "/myOrder" , auth:true },
+    ],
+    
     // dialog: false //
   }),
   methods: {
