@@ -50,6 +50,11 @@ const routes = [
     name: 'payment',
     component: () => import('../views/Payment.vue'),
     meta: {auth:true}
+  },
+  {
+    path: '/profile',
+    name: 'profile',
+    component: () => import('../views/Profile.vue')
   }
 ]
 
