@@ -15,8 +15,7 @@
           <tr>
             <th>Total Bill</th>
             <td>
-              Rp. {{
-              payment.total_bill.toLocaleString('id-ID') }}
+              Rp. {{ payment.total_bill.toLocaleString('id-ID') }}
             </td>
           </tr>
         </v-simple-table>
@@ -71,19 +70,20 @@ export default {
                 text : 'selesai',
                 color : 'success'
             })
-            this.$route.push('/')
+            this.$router.push('/')
 
         }
     },
     created() {
         if (this.payment == undefined){
             this.setAlert({
-                'text' : 'soory payment undefined',
+                'text' : 'sorry payment undefined',
                 'color' : 'error',
                 'status' : true
             })
         }
-        this.$route.push('/')
+        console.log('payment kosong', this.payment);
+        this.$router.push('/')
     }
 }
 </script>

@@ -140,7 +140,7 @@
                                                 </div>
                                             </v-flex>
                                             <v-flex xs6 text-center>
-                                                <v-btn color="orange" @click="dialogConfirm=true" :disabled="totalBill = 0">
+                                                <v-btn color="orange" @click="dialogConfirm=true">
                                                     <v-icon light>mdi-cash</v-icon>
                                                 </v-btn>
                                             </v-flex>
@@ -249,6 +249,7 @@ export default {
         },
         getServices() {
             let courier = this.courier
+            console.log('service nya', courier);
             let endcodeCart = JSON.stringify(this.carts)
             console.log(endcodeCart);
             let formData = new FormData()
@@ -266,7 +267,7 @@ export default {
                 // jika tidak error maka data sercice dan cart akan diupdate
                 if (response_data.status  != 'error') {
                     this.services = response_data.data.services
-                    // console.log(this.services);
+                    console.log(this.services);
                     this.setCart(response_data.data.safe_carts)
                 }
                 this.setAlert({
@@ -308,9 +309,9 @@ export default {
             this.axios.post('/payment', formData, config).then((response) => {
                 let { data } = response
                 if (data && data.status == 'success') {
-                    this.setPayment = data.data
-                    this.$route.push({path: "/payment"})
-                    this.carts = []
+                    this.setPayment(data.data)
+                    this.$router.push({path: "/payment"})
+                    this.setCart([])
                 }
 
                 this.setAlert({

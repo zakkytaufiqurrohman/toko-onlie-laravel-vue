@@ -217,30 +217,29 @@ class ShopController extends Controller
     // fungsi untuk get api rajaongkir
     protected function getServices($data)
     {
+        $url_cost = "https://api.rajaongkir.com/starter/cost";
+        $key="85d9f98f2bf0327db08324ec64c6e155";
+        $postdata = http_build_query($data);
         $curl = curl_init();
-
-        curl_setopt_array($curl, array(
-        CURLOPT_URL => "https://api.rajaongkir.com/starter/cost",
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_ENCODING => "",
-        CURLOPT_MAXREDIRS => 10,
-        CURLOPT_TIMEOUT => 30,
-        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-        CURLOPT_CUSTOMREQUEST => "POST",
-        CURLOPT_POSTFIELDS => "origin=501&destination=114&weight=1700&courier=jne",
-        CURLOPT_HTTPHEADER => array(
-            "content-type: application/x-www-form-urlencoded",
-            "key: 85d9f98f2bf0327db08324ec64c6e155"
-        ),
-        ));
-
+        curl_setopt_array($curl, [
+            CURLOPT_URL => $url_cost,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "POST",
+            CURLOPT_POSTFIELDS => $postdata,
+            CURLOPT_HTTPHEADER => [
+                "content-type: application/x-www-form-urlencoded",
+                "key: ".$key
+            ],
+        ]);
         $response = curl_exec($curl);
-        $err = curl_error($curl);
-
+        $error = curl_error($curl);
         curl_close($curl);
-
         return [
-            'error' => $err,
+            'error' => $error,
             'response' => $response,
         ];
     }
