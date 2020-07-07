@@ -140,7 +140,7 @@
                                                 </div>
                                             </v-flex>
                                             <v-flex xs6 text-center>
-                                                <v-btn color="orange" @click="dialogConfirm=true">
+                                                <v-btn color="orange" @click="dialogConfirm=true" :disabled="totalBill == 0">
                                                     <v-icon light>mdi-cash</v-icon>
                                                 </v-btn>
                                             </v-flex>
