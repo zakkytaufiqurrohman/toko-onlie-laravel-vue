@@ -81,9 +81,10 @@ export default {
                 'color' : 'error',
                 'status' : true
             })
+            console.log('payment kosong', this.payment);
+            this.$router.push('/')
         }
-        console.log('payment kosong', this.payment);
-        this.$router.push('/')
+       
     }
 }
 </script>
